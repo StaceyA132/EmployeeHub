@@ -1,7 +1,6 @@
 package com.employeehub.service;
 
 import com.employeehub.dto.EmployeeDto;
-import com.employeehub.model.Employee;
 
 import java.util.List;
 

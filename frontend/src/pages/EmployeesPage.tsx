@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import api from '../api';
-import { Employee } from '../types';
+import type { Employee } from '../types.ts';
 import { useAuth } from '../stores/AuthContext';
 
 function EmployeesPage() {
