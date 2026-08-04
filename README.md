@@ -31,6 +31,19 @@ npm install
 npm run dev
 ```
 
+### Verification
+
+Confirm the backend and frontend build successfully:
+
+```bash
+cd backend
+mvn -q -DskipTests package
+
+cd ../frontend
+npm install
+npm run build
+```
+
 ### Backend development
 
 ```bash
