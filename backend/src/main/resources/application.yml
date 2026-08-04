@@ -1,0 +1,20 @@
+server:
+  port: 8080
+
+spring:
+  datasource:
+    url: jdbc:postgresql://db:5432/employeehub
+    username: employeehub
+    password: changeme
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+
+employeehub:
+  jwt:
+    secret: my-super-long-secret-key-for-employeehub-jwt-2026
+    expiration-ms: 3600000

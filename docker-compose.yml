@@ -1,0 +1,39 @@
+version: '3.9'
+services:
+  db:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_DB: employeehub
+      POSTGRES_USER: employeehub
+      POSTGRES_PASSWORD: changeme
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    ports:
+      - '5432:5432'
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/employeehub
+      SPRING_DATASOURCE_USERNAME: employeehub
+      SPRING_DATASOURCE_PASSWORD: changeme
+      EMPLOYEEHUB_JWT_SECRET: my-super-long-secret-key-for-employeehub-jwt-2026
+      EMPLOYEEHUB_JWT_EXPIRATION_MS: 3600000
+    depends_on:
+      - db
+    ports:
+      - '8080:8080'
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    ports:
+      - '4173:4173'
+    depends_on:
+      - backend
+
+volumes:
+  db-data:
