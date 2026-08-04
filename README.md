@@ -1,10 +1,8 @@
 # EmployeeHub
 
-EmployeeHub is an enterprise-style employee management platform that combines a modern React + TypeScript frontend with a secure Java Spring Boot backend.
+EmployeeHub is a full-stack employee management app with a React + TypeScript frontend and a Spring Boot backend.
 
-The application supports full CRUD operations for employee records, department management, and role-based access control using JWT authentication. It is built to simulate the type of internal workforce management software used by organizations to manage employee profiles, departments, and operational reporting.
-
-The frontend delivers a responsive dashboard, employee roster, and login experience, while the backend exposes REST APIs backed by PostgreSQL and Spring Data JPA.
+It supports CRUD employee records, department management, and JWT-protected API access. The app uses PostgreSQL for data storage and provides a dashboard, employee roster, and secure login.
 
 ## Architecture
 
