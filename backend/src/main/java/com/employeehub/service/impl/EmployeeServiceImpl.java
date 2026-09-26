@@ -1,6 +1,8 @@
 package com.employeehub.service.impl;
 
 import com.employeehub.dto.EmployeeDto;
+import com.employeehub.dto.EmployeeMetricsDto;
+import com.employeehub.exception.EmployeeNotFoundException;
 import com.employeehub.model.Department;
 import com.employeehub.model.Employee;
 import com.employeehub.repository.DepartmentRepository;
@@ -10,6 +12,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Objects;
+import java.time.LocalDate;
 import java.util.stream.Collectors;
 
 @Service
@@ -31,7 +35,7 @@ public class EmployeeServiceImpl implements EmployeeService {
     @Override
     public EmployeeDto getEmployeeById(Long id) {
         return employeeRepository.findById(id).map(this::mapToDto)
-                .orElseThrow(() -> new IllegalArgumentException("Employee not found: " + id));
+                .orElseThrow(() -> new EmployeeNotFoundException(id));
     }
 
     @Override
@@ -43,8 +47,8 @@ public class EmployeeServiceImpl implements EmployeeService {
 
     @Override
     public EmployeeDto updateEmployee(Long id, EmployeeDto dto) {
-        Employee existing = employeeRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("Employee not found: " + id));
+                Employee existing = employeeRepository.findById(id)
+                .orElseThrow(() -> new EmployeeNotFoundException(id));
         existing.setFirstName(dto.getFirstName());
         existing.setLastName(dto.getLastName());
         existing.setEmail(dto.getEmail());
@@ -56,10 +60,33 @@ public class EmployeeServiceImpl implements EmployeeService {
         return mapToDto(employeeRepository.save(existing));
     }
 
-    @Override
+        @Override
     public void deleteEmployee(Long id) {
+        if (!employeeRepository.existsById(id)) {
+            throw new EmployeeNotFoundException(id);
+        }
         employeeRepository.deleteById(id);
     }
+
+        @Override
+        public EmployeeMetricsDto getEmployeeMetrics() {
+        List<Employee> employees = employeeRepository.findAll();
+        long total = employees.size();
+        long active = employees.stream()
+            .filter(employee -> employee.getStatus() != null && employee.getStatus().equalsIgnoreCase("active"))
+            .count();
+        long recentHires = employees.stream()
+            .filter(employee -> employee.getHireDate() != null && employee.getHireDate().isAfter(LocalDate.now().minusDays(30)))
+            .count();
+        long departments = employees.stream()
+            .map(Employee::getDepartment)
+            .filter(Objects::nonNull)
+            .map(Department::getName)
+            .filter(Objects::nonNull)
+            .distinct()
+            .count();
+        return new EmployeeMetricsDto(total, active, departments, recentHires);
+        }
 
     private EmployeeDto mapToDto(Employee employee) {
         EmployeeDto dto = new EmployeeDto();
