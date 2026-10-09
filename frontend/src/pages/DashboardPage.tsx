@@ -1,18 +1,41 @@
-import { useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../stores/AuthContext';
+import api from '../api';
+import type { EmployeeMetrics } from '../types';
 
-const stats = [
-  { label: 'Total employees', value: '42' },
-  { label: 'Departments', value: '5' },
-  { label: 'Active positions', value: '8' },
-  { label: 'New hires', value: '4' },
+const defaultStats = [
+  { label: 'Total employees', value: '0' },
+  { label: 'Active employees', value: '0' },
+  { label: 'Departments', value: '0' },
+  { label: 'Recent hires', value: '0' },
 ];
 
 function DashboardPage() {
-  const { logout } = useAuth();
+  const { logout, isAuthenticated } = useAuth();
+  const [stats, setStats] = useState(defaultStats);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
 
-  const quickStats = useMemo(() => stats, []);
+  const quickStats = useMemo(() => stats, [stats]);
+
+  useEffect(() => {
+    if (!isAuthenticated) {
+      return;
+    }
+    api.get<EmployeeMetrics>('/employees/metrics')
+      .then((response) => {
+        const metrics = response.data;
+        setStats([
+          { label: 'Total employees', value: String(metrics.totalEmployees) },
+          { label: 'Active employees', value: String(metrics.activeEmployees) },
+          { label: 'Departments', value: String(metrics.departments) },
+          { label: 'Recent hires', value: String(metrics.recentHires) },
+        ]);
+      })
+      .catch(() => setError('Unable to load dashboard metrics.'))
+      .finally(() => setLoading(false));
+  }, [isAuthenticated]);
 
   return (
     <div className="min-h-screen bg-slate-100">
@@ -33,14 +56,20 @@ function DashboardPage() {
         </div>
       </header>
       <main className="mx-auto max-w-7xl px-6 py-8">
-        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-          {quickStats.map((item) => (
-            <div key={item.label} className="rounded-3xl bg-white p-6 shadow-sm ring-1 ring-slate-200">
-              <p className="text-sm text-slate-500">{item.label}</p>
-              <p className="mt-4 text-3xl font-semibold text-slate-900">{item.value}</p>
-            </div>
-          ))}
-        </div>
+        {loading ? (
+          <div className="rounded-3xl bg-white p-6 shadow-sm ring-1 ring-slate-200">Loading metrics...</div>
+        ) : error ? (
+          <div className="rounded-3xl bg-white p-6 text-red-600 shadow-sm ring-1 ring-slate-200">{error}</div>
+        ) : (
+          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+            {quickStats.map((item) => (
+              <div key={item.label} className="rounded-3xl bg-white p-6 shadow-sm ring-1 ring-slate-200">
+                <p className="text-sm text-slate-500">{item.label}</p>
+                <p className="mt-4 text-3xl font-semibold text-slate-900">{item.value}</p>
+              </div>
+            ))}
+          </div>
+        )}
         <section className="mt-8 rounded-3xl bg-white p-6 shadow-sm ring-1 ring-slate-200">
           <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
             <div>

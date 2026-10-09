@@ -7,6 +7,12 @@ const api = axios.create({
   },
 });
 
+const AUTH_TOKEN_KEY = 'employeehub_token';
+const existingToken = typeof window !== 'undefined' ? localStorage.getItem(AUTH_TOKEN_KEY) : null;
+if (existingToken) {
+  api.defaults.headers.common.Authorization = `Bearer ${existingToken}`;
+}
+
 export const setAuthToken = (token: string | null) => {
   if (token) {
     api.defaults.headers.common.Authorization = `Bearer ${token}`;

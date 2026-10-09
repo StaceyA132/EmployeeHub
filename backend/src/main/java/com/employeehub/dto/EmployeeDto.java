@@ -1,16 +1,30 @@
 package com.employeehub.dto;
 
+import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.PositiveOrZero;
+
 import java.math.BigDecimal;
 import java.time.LocalDate;
 
 public class EmployeeDto {
     private Long id;
+    @NotBlank
     private String firstName;
+    @NotBlank
     private String lastName;
+    @NotBlank
+    @Email
     private String email;
+    @NotBlank
     private String position;
+    @NotNull
+    @PositiveOrZero
     private BigDecimal salary;
+    @NotNull
     private LocalDate hireDate;
+    @NotBlank
     private String status;
     private String departmentName;
 

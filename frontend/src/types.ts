@@ -1,5 +1,5 @@
 export interface Employee {
-  id: number;
+  id?: number;
   firstName: string;
   lastName: string;
   email: string;
@@ -8,4 +8,11 @@ export interface Employee {
   hireDate: string;
   status: string;
   departmentName: string;
+}
+
+export interface EmployeeMetrics {
+  totalEmployees: number;
+  activeEmployees: number;
+  departments: number;
+  recentHires: number;
 }
