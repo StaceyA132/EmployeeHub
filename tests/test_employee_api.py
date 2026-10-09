@@ -99,20 +99,52 @@ def test_login_nonexistent_user():
     assert resp.status_code in (401, 403, 404)
 
 
-def test_register_duplicate_username_fails():
+def test_register_duplicate_username_fails(auth_headers):
     resp = requests.post(f"{BASE_URL}/api/auth/register", json={
         "username": "admin", "password": "irrelevant123"
-    })
+    }, headers=auth_headers)
     assert resp.status_code == 400
 
 
-def test_register_new_user_success():
+def test_register_new_user_success(auth_headers):
     unique_username = f"qa_user_{uuid.uuid4().hex[:8]}"
     resp = requests.post(f"{BASE_URL}/api/auth/register", json={
         "username": unique_username, "password": "TestPass123"
+    }, headers=auth_headers)
+    assert resp.status_code == 201
+    assert resp.json() == {"username": unique_username, "role": "ROLE_USER"}
+
+
+def test_register_without_auth_rejected():
+    resp = requests.post(f"{BASE_URL}/api/auth/register", json={
+        "username": f"anon_{uuid.uuid4().hex[:8]}", "password": "TestPass123"
     })
-    assert resp.status_code == 200
-    assert resp.json()["token"]
+    assert resp.status_code == 401
+
+
+def test_register_as_manager_forbidden():
+    login = requests.post(f"{BASE_URL}/api/auth/login", json={
+        "username": "manager", "password": "manager123"
+    })
+    headers = {"Authorization": f"Bearer {login.json()['token']}"}
+    resp = requests.post(f"{BASE_URL}/api/auth/register", json={
+        "username": f"mgr_made_{uuid.uuid4().hex[:8]}", "password": "TestPass123"
+    }, headers=headers)
+    assert resp.status_code == 403
+
+
+def test_registered_user_is_read_only(auth_headers, new_employee_payload):
+    username = f"viewer_{uuid.uuid4().hex[:8]}"
+    requests.post(f"{BASE_URL}/api/auth/register", json={
+        "username": username, "password": "TestPass123"
+    }, headers=auth_headers)
+    login = requests.post(f"{BASE_URL}/api/auth/login", json={
+        "username": username, "password": "TestPass123"
+    })
+    headers = {"Authorization": f"Bearer {login.json()['token']}"}
+    assert requests.get(f"{BASE_URL}/api/employees", headers=headers).status_code == 200
+    resp = requests.post(f"{BASE_URL}/api/employees", json=new_employee_payload, headers=headers)
+    assert resp.status_code == 403
 
 
 # ---------- GET ----------
