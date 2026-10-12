@@ -149,7 +149,7 @@ function EmployeesPage() {
               <input placeholder="Last name" value={editing.lastName} onChange={(e) => setEditing({ ...editing, lastName: e.target.value })} className="border p-2 rounded" />
               <input placeholder="Email" value={editing.email} onChange={(e) => setEditing({ ...editing, email: e.target.value })} className="border p-2 rounded" />
               <input placeholder="Position" value={editing.position} onChange={(e) => setEditing({ ...editing, position: e.target.value })} className="border p-2 rounded" />
-              <input placeholder="Salary" type="number" value={editing.salary} onChange={(e) => setEditing({ ...editing, salary: Number(e.target.value) })} className="border p-2 rounded" />
+              <input placeholder="Salary" type="number" value={editing.salary ?? ''} onChange={(e) => setEditing({ ...editing, salary: Number(e.target.value) })} className="border p-2 rounded" />
               <input type="date" value={editing.hireDate} onChange={(e) => setEditing({ ...editing, hireDate: e.target.value })} className="border p-2 rounded" />
               <input placeholder="Status" value={editing.status} onChange={(e) => setEditing({ ...editing, status: e.target.value })} className="border p-2 rounded" />
               <input placeholder="Department" value={editing.departmentName} onChange={(e) => setEditing({ ...editing, departmentName: e.target.value })} className="border p-2 rounded" />

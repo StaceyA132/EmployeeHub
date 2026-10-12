@@ -4,7 +4,7 @@ export interface Employee {
   lastName: string;
   email: string;
   position: string;
-  salary: number;
+  salary: number | null;
   hireDate: string;
   status: string;
   departmentName: string;

@@ -6,6 +6,7 @@ import com.employeehub.service.EmployeeService;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -21,8 +22,10 @@ public class EmployeeController {
     }
 
     @GetMapping
-    public ResponseEntity<List<EmployeeDto>> getAll() {
-        return ResponseEntity.ok(employeeService.getAllEmployees());
+    public ResponseEntity<List<EmployeeDto>> getAll(Authentication auth) {
+        List<EmployeeDto> employees = employeeService.getAllEmployees();
+        employees.forEach(dto -> hideSalaryUnlessAllowed(dto, auth));
+        return ResponseEntity.ok(employees);
     }
 
     @GetMapping("/metrics")
@@ -31,8 +34,8 @@ public class EmployeeController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<EmployeeDto> getById(@PathVariable Long id) {
-        return ResponseEntity.ok(employeeService.getEmployeeById(id));
+    public ResponseEntity<EmployeeDto> getById(@PathVariable Long id, Authentication auth) {
+        return ResponseEntity.ok(hideSalaryUnlessAllowed(employeeService.getEmployeeById(id), auth));
     }
 
     @PreAuthorize("hasAnyAuthority('ROLE_ADMIN','ROLE_MANAGER')")
@@ -52,5 +55,15 @@ public class EmployeeController {
     public ResponseEntity<Void> delete(@PathVariable Long id) {
         employeeService.deleteEmployee(id);
         return ResponseEntity.noContent().build();
+    }
+
+    // Salaries are only visible to admins and managers; read-only users get null
+    private EmployeeDto hideSalaryUnlessAllowed(EmployeeDto dto, Authentication auth) {
+        boolean canViewSalary = auth.getAuthorities().stream()
+                .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN") || a.getAuthority().equals("ROLE_MANAGER"));
+        if (!canViewSalary) {
+            dto.setSalary(null);
+        }
+        return dto;
     }
 }
