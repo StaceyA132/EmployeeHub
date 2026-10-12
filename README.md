@@ -94,7 +94,7 @@ pytest tests/ -v
 ## Project structure
 
 - Backend implements layered architecture with controllers, services, repositories, entities, DTOs, and JWT security.
-- Frontend includes login, dashboard, and employee listing pages.
+- Frontend has a sidebar layout with a login page, a dashboard (live metrics, headcount by department, recent hires), and an employee directory with search, filters, and add/edit/delete dialogs. It works on phones as well as desktop.
 
 ## Notes
 
