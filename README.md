@@ -12,6 +12,16 @@ It supports CRUD employee records, department management, and JWT-protected API 
 
 ## Getting Started
 
+### Configure secrets
+
+The database password and JWT signing secret are read from environment variables, not stored in the code.
+Copy the example file and fill in your own values (`.env` is git-ignored):
+
+```bash
+cp .env.example .env
+# then edit .env, e.g. set JWT_SECRET to the output of: openssl rand -base64 48
+```
+
 ### Run locally with Docker
 
 ```bash
@@ -22,8 +32,10 @@ The backend will be available at `http://localhost:8080` and the frontend at `ht
 
 ### Default users
 
-- `admin` / `admin123`
-- `manager` / `manager123`
+- `admin` / `admin123` (full access; can create users)
+- `manager` / `manager123` (can create, edit, and delete employees)
+
+New accounts can only be created by an admin via `POST /api/auth/register`, and are read-only (`ROLE_USER`).
 
 ### Frontend development
 
@@ -32,6 +44,8 @@ cd frontend
 npm install
 npm run dev
 ```
+
+The dev server runs at `http://localhost:3000`.
 
 ### Verification
 
@@ -51,7 +65,19 @@ npm run build
 ```bash
 cd backend
 mvn clean package
+set -a; source ../.env; set +a   # load DB_PASSWORD and JWT_SECRET
 mvn spring-boot:run
+```
+
+This expects PostgreSQL on `localhost:5432` (e.g. `docker compose up db`).
+
+### API tests
+
+With the app running:
+
+```bash
+pip install pytest requests
+pytest tests/ -v
 ```
 
 ## Project structure

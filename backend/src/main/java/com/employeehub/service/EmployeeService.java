@@ -1,6 +1,7 @@
 package com.employeehub.service;
 
 import com.employeehub.dto.EmployeeDto;
+import com.employeehub.dto.EmployeeMetricsDto;
 
 import java.util.List;
 
@@ -10,4 +11,5 @@ public interface EmployeeService {
     EmployeeDto createEmployee(EmployeeDto dto);
     EmployeeDto updateEmployee(Long id, EmployeeDto dto);
     void deleteEmployee(Long id);
+    EmployeeMetricsDto getEmployeeMetrics();
 }

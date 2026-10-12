@@ -1,9 +1,13 @@
 import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
-import { setAuthToken } from '../api';
+import api, { setAuthToken } from '../api';
+import { getJwtRoles, isJwtExpired } from '../utils/jwt';
 
 interface AuthContextState {
   token: string | null;
   isAuthenticated: boolean;
+  isAdmin: boolean;
+  isManager: boolean;
+  roles: string[];
   login: (token: string) => void;
   logout: () => void;
 }
@@ -12,16 +16,32 @@ const AUTH_TOKEN_KEY = 'employeehub_token';
 const AuthContext = createContext<AuthContextState | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [token, setToken] = useState<string | null>(() => localStorage.getItem(AUTH_TOKEN_KEY));
+  const [token, setToken] = useState<string | null>(() => {
+    const stored = localStorage.getItem(AUTH_TOKEN_KEY);
+    return stored && !isJwtExpired(stored) ? stored : null;
+  });
+  const roles = useMemo(() => (token ? getJwtRoles(token) : []), [token]);
 
   useEffect(() => {
     if (token) {
       localStorage.setItem(AUTH_TOKEN_KEY, token);
       setAuthToken(token);
     } else {
+      localStorage.removeItem(AUTH_TOKEN_KEY);
       setAuthToken(null);
     }
   }, [token]);
+
+  // Backend returns 401 when the token is missing or expired: drop it so the user is sent to /login
+  useEffect(() => {
+    const id = api.interceptors.response.use(undefined, (error) => {
+      if (error.response?.status === 401) {
+        setToken(null);
+      }
+      return Promise.reject(error);
+    });
+    return () => api.interceptors.response.eject(id);
+  }, []);
 
   const login = (newToken: string) => {
     setToken(newToken);
@@ -29,17 +49,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const logout = () => {
     setToken(null);
-    localStorage.removeItem(AUTH_TOKEN_KEY);
   };
 
   const value = useMemo(
     () => ({
       token,
       isAuthenticated: Boolean(token),
+      roles,
+      isAdmin: roles.includes('ROLE_ADMIN'),
+      isManager: roles.includes('ROLE_MANAGER'),
       login,
       logout,
     }),
-    [token]
+    [token, roles]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

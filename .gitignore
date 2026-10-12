@@ -16,3 +16,12 @@
 
 # OS
 .DS_Store
+# Editor
+.vscode/
+
+# Python
+__pycache__/
+.pytest_cache/
+
+# Secrets
+.env
