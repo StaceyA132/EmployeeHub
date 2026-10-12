@@ -249,3 +249,57 @@ def test_delete_already_deleted_employee(auth_headers, new_employee_payload):
     assert second_delete.status_code == 404, (
         f"Expected 404 deleting an already-deleted employee, got {second_delete.status_code}."
     )
+
+# ---------- Unique email ----------
+
+def test_create_duplicate_email_conflict(auth_headers, created_employee, new_employee_payload):
+    payload = dict(new_employee_payload, email=created_employee["email"].upper())
+    resp = requests.post(f"{BASE_URL}/api/employees", json=payload, headers=auth_headers)
+    assert resp.status_code == 409
+
+
+def test_update_to_duplicate_email_conflict(auth_headers, created_employee, new_employee_payload):
+    other = requests.post(f"{BASE_URL}/api/employees",
+                          json=dict(new_employee_payload, email=f"other.{uuid.uuid4().hex[:8]}@example.com"),
+                          headers=auth_headers).json()
+    try:
+        resp = requests.put(f"{BASE_URL}/api/employees/{other['id']}",
+                            json=dict(new_employee_payload, email=created_employee["email"]),
+                            headers=auth_headers)
+        assert resp.status_code == 409
+    finally:
+        requests.delete(f"{BASE_URL}/api/employees/{other['id']}", headers=auth_headers)
+
+
+def test_update_keeping_own_email_succeeds(auth_headers, created_employee, new_employee_payload):
+    resp = requests.put(f"{BASE_URL}/api/employees/{created_employee['id']}",
+                        json=dict(new_employee_payload, email=created_employee["email"], position="Lead"),
+                        headers=auth_headers)
+    assert resp.status_code == 200
+
+
+# ---------- Salary visibility ----------
+
+def _read_only_headers(auth_headers):
+    username = f"viewer_{uuid.uuid4().hex[:8]}"
+    requests.post(f"{BASE_URL}/api/auth/register", json={
+        "username": username, "password": "TestPass123"
+    }, headers=auth_headers)
+    login = requests.post(f"{BASE_URL}/api/auth/login", json={
+        "username": username, "password": "TestPass123"
+    })
+    return {"Authorization": f"Bearer {login.json()['token']}"}
+
+
+def test_salary_visible_to_admin(auth_headers, created_employee):
+    resp = requests.get(f"{BASE_URL}/api/employees/{created_employee['id']}", headers=auth_headers)
+    assert resp.json()["salary"] is not None
+
+
+def test_salary_hidden_from_read_only_user(auth_headers, created_employee):
+    headers = _read_only_headers(auth_headers)
+    one = requests.get(f"{BASE_URL}/api/employees/{created_employee['id']}", headers=headers)
+    assert one.status_code == 200
+    assert one.json()["salary"] is None
+    everyone = requests.get(f"{BASE_URL}/api/employees", headers=headers).json()
+    assert all(e["salary"] is None for e in everyone)

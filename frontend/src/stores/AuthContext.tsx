@@ -1,9 +1,10 @@
 import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
-import api, { setAuthToken } from '../api';
-import { getJwtRoles, isJwtExpired } from '../utils/jwt';
+import api, { AUTH_TOKEN_KEY } from '../api';
+import { getJwtRoles, getJwtUsername, isJwtExpired } from '../utils/jwt';
 
 interface AuthContextState {
   token: string | null;
+  username: string;
   isAuthenticated: boolean;
   isAdmin: boolean;
   isManager: boolean;
@@ -12,48 +13,45 @@ interface AuthContextState {
   logout: () => void;
 }
 
-const AUTH_TOKEN_KEY = 'employeehub_token';
 const AuthContext = createContext<AuthContextState | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [token, setToken] = useState<string | null>(() => {
     const stored = localStorage.getItem(AUTH_TOKEN_KEY);
-    return stored && !isJwtExpired(stored) ? stored : null;
+    if (stored && !isJwtExpired(stored)) {
+      return stored;
+    }
+    localStorage.removeItem(AUTH_TOKEN_KEY);
+    return null;
   });
   const roles = useMemo(() => (token ? getJwtRoles(token) : []), [token]);
 
-  useEffect(() => {
-    if (token) {
-      localStorage.setItem(AUTH_TOKEN_KEY, token);
-      setAuthToken(token);
-    } else {
-      localStorage.removeItem(AUTH_TOKEN_KEY);
-      setAuthToken(null);
-    }
-  }, [token]);
+  // localStorage is updated synchronously (not in an effect) because api.ts reads it on every request
+  const login = (newToken: string) => {
+    localStorage.setItem(AUTH_TOKEN_KEY, newToken);
+    setToken(newToken);
+  };
+
+  const logout = () => {
+    localStorage.removeItem(AUTH_TOKEN_KEY);
+    setToken(null);
+  };
 
   // Backend returns 401 when the token is missing or expired: drop it so the user is sent to /login
   useEffect(() => {
     const id = api.interceptors.response.use(undefined, (error) => {
       if (error.response?.status === 401) {
-        setToken(null);
+        logout();
       }
       return Promise.reject(error);
     });
     return () => api.interceptors.response.eject(id);
   }, []);
 
-  const login = (newToken: string) => {
-    setToken(newToken);
-  };
-
-  const logout = () => {
-    setToken(null);
-  };
-
   const value = useMemo(
     () => ({
       token,
+      username: token ? getJwtUsername(token) : '',
       isAuthenticated: Boolean(token),
       roles,
       isAdmin: roles.includes('ROLE_ADMIN'),

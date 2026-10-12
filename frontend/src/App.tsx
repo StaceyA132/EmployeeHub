@@ -1,4 +1,5 @@
 import { Navigate, Route, Routes } from 'react-router-dom';
+import AppLayout from './components/AppLayout';
 import DashboardPage from './pages/DashboardPage';
 import EmployeesPage from './pages/EmployeesPage';
 import LoginPage from './pages/LoginPage';
@@ -8,19 +9,14 @@ function App() {
   const { isAuthenticated } = useAuth();
 
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-900">
-      <Routes>
-        <Route path="/login" element={<LoginPage />} />
-        <Route
-          path="/"
-          element={isAuthenticated ? <DashboardPage /> : <Navigate to="/login" replace />}
-        />
-        <Route
-          path="/employees"
-          element={isAuthenticated ? <EmployeesPage /> : <Navigate to="/login" replace />}
-        />
-      </Routes>
-    </div>
+    <Routes>
+      <Route path="/login" element={isAuthenticated ? <Navigate to="/" replace /> : <LoginPage />} />
+      <Route element={isAuthenticated ? <AppLayout /> : <Navigate to="/login" replace />}>
+        <Route path="/" element={<DashboardPage />} />
+        <Route path="/employees" element={<EmployeesPage />} />
+      </Route>
+      <Route path="*" element={<Navigate to="/" replace />} />
+    </Routes>
   );
 }
 

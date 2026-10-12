@@ -1,5 +1,7 @@
 import axios from 'axios';
 
+export const AUTH_TOKEN_KEY = 'employeehub_token';
+
 const api = axios.create({
   baseURL: 'http://localhost:8080/api',
   headers: {
@@ -7,18 +9,13 @@ const api = axios.create({
   },
 });
 
-const AUTH_TOKEN_KEY = 'employeehub_token';
-const existingToken = typeof window !== 'undefined' ? localStorage.getItem(AUTH_TOKEN_KEY) : null;
-if (existingToken) {
-  api.defaults.headers.common.Authorization = `Bearer ${existingToken}`;
-}
-
-export const setAuthToken = (token: string | null) => {
+// Read the token on every request so it's never stale, e.g. right after login
+api.interceptors.request.use((config) => {
+  const token = localStorage.getItem(AUTH_TOKEN_KEY);
   if (token) {
-    api.defaults.headers.common.Authorization = `Bearer ${token}`;
-  } else {
-    delete api.defaults.headers.common.Authorization;
+    config.headers.Authorization = `Bearer ${token}`;
   }
-};
+  return config;
+});
 
 export default api;

@@ -71,6 +71,17 @@ mvn spring-boot:run
 
 This expects PostgreSQL on `localhost:5432` (e.g. `docker compose up db`).
 
+### Backend unit tests
+
+These use an in-memory H2 database, so no Postgres or Docker is needed:
+
+```bash
+cd backend
+mvn test
+```
+
+GitHub Actions runs these and the frontend build on every push and pull request (`.github/workflows/ci.yml`).
+
 ### API tests
 
 With the app running:
@@ -83,7 +94,7 @@ pytest tests/ -v
 ## Project structure
 
 - Backend implements layered architecture with controllers, services, repositories, entities, DTOs, and JWT security.
-- Frontend includes login, dashboard, and employee listing pages.
+- Frontend has a sidebar layout with a login page, a dashboard (live metrics, headcount by department, recent hires), and an employee directory with search, filters, and add/edit/delete dialogs. It works on phones as well as desktop.
 
 ## Notes
 

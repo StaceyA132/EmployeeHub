@@ -19,6 +19,10 @@ export function getJwtRoles(token: string): string[] {
   return payload.roles;
 }
 
+export function getJwtUsername(token: string): string {
+  return parseJwtPayload(token)?.sub ?? '';
+}
+
 export function isJwtExpired(token: string): boolean {
   const payload = parseJwtPayload(token);
   if (!payload || typeof payload.exp !== 'number') {

@@ -20,6 +20,7 @@ public class Employee {
     private String lastName;
 
     @NotBlank
+    @Column(unique = true)
     private String email;
 
     @NotBlank

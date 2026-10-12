@@ -1,6 +1,7 @@
 package com.employeehub.exception;
 
 import jakarta.validation.ConstraintViolationException;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -18,6 +19,17 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(EmployeeNotFoundException.class)
     public ResponseEntity<Map<String, Object>> handleNotFound(EmployeeNotFoundException ex) {
         return error(HttpStatus.NOT_FOUND, ex.getMessage());
+    }
+
+    @ExceptionHandler(DuplicateEmailException.class)
+    public ResponseEntity<Map<String, Object>> handleDuplicateEmail(DuplicateEmailException ex) {
+        return error(HttpStatus.CONFLICT, ex.getMessage());
+    }
+
+    // Backstop for the database's unique constraint (e.g. two saves racing with the same email)
+    @ExceptionHandler(DataIntegrityViolationException.class)
+    public ResponseEntity<Map<String, Object>> handleDataIntegrity(DataIntegrityViolationException ex) {
+        return error(HttpStatus.CONFLICT, "This record conflicts with existing data");
     }
 
     @ExceptionHandler(IllegalArgumentException.class)
