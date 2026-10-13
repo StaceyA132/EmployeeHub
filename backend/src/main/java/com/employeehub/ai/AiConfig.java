@@ -1,5 +1,6 @@
 package com.employeehub.ai;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
@@ -13,7 +14,7 @@ public class AiConfig {
     private static final Logger log = LoggerFactory.getLogger(AiConfig.class);
 
     @Bean
-    public AiQueryInterpreter aiQueryInterpreter(AiProperties properties) {
+    public AiQueryInterpreter aiQueryInterpreter(AiProperties properties, ObjectMapper objectMapper) {
         if (!properties.isConfigured()) {
             log.info("No AI API key set (ANTHROPIC_API_KEY); the Ask feature is disabled.");
             return (question, context) -> {
@@ -21,7 +22,10 @@ public class AiConfig {
                         "The Ask feature isn't set up on this server.");
             };
         }
-        // Provider implementations are selected here by properties.getProvider() (step 3 adds Anthropic)
-        throw new IllegalStateException("Unknown AI provider: " + properties.getProvider());
+        // To add a provider: implement AiQueryInterpreter and add a case here
+        return switch (properties.getProvider().toLowerCase()) {
+            case "anthropic" -> new AnthropicQueryInterpreter(properties, objectMapper);
+            default -> throw new IllegalStateException("Unknown AI provider: " + properties.getProvider());
+        };
     }
 }

@@ -21,8 +21,8 @@ public class QuestionInterpretation {
     private String nameContains;
     private String hiredOnOrAfter;
     private String hiredOnOrBefore;
-    private BigDecimal minSalary;
-    private BigDecimal maxSalary;
+    private String minSalary;
+    private String maxSalary;
     private String sortBy;
     private String sortDirection;
     private Integer limit;
@@ -36,8 +36,8 @@ public class QuestionInterpretation {
         q.setNameContains(nameContains);
         q.setHiredOnOrAfter(parseDate("hiredOnOrAfter", hiredOnOrAfter));
         q.setHiredOnOrBefore(parseDate("hiredOnOrBefore", hiredOnOrBefore));
-        q.setMinSalary(minSalary);
-        q.setMaxSalary(maxSalary);
+        q.setMinSalary(parseAmount("minSalary", minSalary));
+        q.setMaxSalary(parseAmount("maxSalary", maxSalary));
         q.setResultType(parseEnum(EmployeeQuery.ResultType.class, "resultType", resultType));
         q.setSortBy(parseEnum(EmployeeQuery.SortField.class, "sortBy", sortBy));
         q.setSortDirection(parseEnum(EmployeeQuery.SortDirection.class, "sortDirection", sortDirection));
@@ -54,6 +54,18 @@ public class QuestionInterpretation {
         } catch (DateTimeParseException e) {
             throw new AiServiceException(AiServiceException.Kind.INVALID_RESPONSE,
                     "AI returned an invalid date for " + field + ": " + value, e);
+        }
+    }
+
+    private static BigDecimal parseAmount(String field, String value) {
+        if (value == null || value.isBlank()) {
+            return null;
+        }
+        try {
+            return new BigDecimal(value.trim().replace(",", "").replace("$", ""));
+        } catch (NumberFormatException e) {
+            throw new AiServiceException(AiServiceException.Kind.INVALID_RESPONSE,
+                    "AI returned an invalid amount for " + field + ": " + value, e);
         }
     }
 
@@ -141,19 +153,19 @@ public class QuestionInterpretation {
         this.hiredOnOrBefore = hiredOnOrBefore;
     }
 
-    public BigDecimal getMinSalary() {
+    public String getMinSalary() {
         return minSalary;
     }
 
-    public void setMinSalary(BigDecimal minSalary) {
+    public void setMinSalary(String minSalary) {
         this.minSalary = minSalary;
     }
 
-    public BigDecimal getMaxSalary() {
+    public String getMaxSalary() {
         return maxSalary;
     }
 
-    public void setMaxSalary(BigDecimal maxSalary) {
+    public void setMaxSalary(String maxSalary) {
         this.maxSalary = maxSalary;
     }
 

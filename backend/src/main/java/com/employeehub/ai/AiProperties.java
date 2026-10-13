@@ -13,6 +13,8 @@ public class AiProperties {
     /** Provider API key. Blank means the Ask feature is switched off. */
     private String apiKey;
     private String model = "claude-opus-5-5";
+    /** Reasoning effort (low/medium/high/xhigh/max). Turning a question into filters is simple, so low is enough. */
+    private String effort = "low";
     /** Per-attempt timeout for one provider call. */
     private Duration timeout = Duration.ofSeconds(20);
     /** Retries the SDK makes for timeouts, 429s, and 5xx errors. */
@@ -44,6 +46,14 @@ public class AiProperties {
 
     public void setModel(String model) {
         this.model = model;
+    }
+
+    public String getEffort() {
+        return effort;
+    }
+
+    public void setEffort(String effort) {
+        this.effort = effort;
     }
 
     public Duration getTimeout() {
