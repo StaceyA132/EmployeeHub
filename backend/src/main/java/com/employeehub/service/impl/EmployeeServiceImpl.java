@@ -2,13 +2,19 @@ package com.employeehub.service.impl;
 
 import com.employeehub.dto.EmployeeDto;
 import com.employeehub.dto.EmployeeMetricsDto;
+import com.employeehub.dto.EmployeeSearchResult;
 import com.employeehub.exception.DuplicateEmailException;
 import com.employeehub.exception.EmployeeNotFoundException;
 import com.employeehub.model.Department;
 import com.employeehub.model.Employee;
+import com.employeehub.query.EmployeeQuery;
+import com.employeehub.query.EmployeeSpecifications;
 import com.employeehub.repository.DepartmentRepository;
 import com.employeehub.repository.EmployeeRepository;
 import com.employeehub.service.EmployeeService;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -93,6 +99,25 @@ public class EmployeeServiceImpl implements EmployeeService {
                 .distinct()
                 .count();
         return new EmployeeMetricsDto(total, active, departments, recentHires);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public EmployeeSearchResult search(EmployeeQuery query) {
+        Sort.Direction direction = query.getSortDirection() == EmployeeQuery.SortDirection.DESC
+                ? Sort.Direction.DESC : Sort.Direction.ASC;
+        Sort sort = switch (query.getSortBy()) {
+            case HIRE_DATE -> Sort.by(direction, "hireDate");
+            case SALARY -> Sort.by(direction, "salary");
+            case NAME -> Sort.by(direction, "lastName", "firstName");
+        };
+        // A page of size `limit` gives both the total match count and the first N rows in one call
+        Page<Employee> page = employeeRepository.findAll(
+                EmployeeSpecifications.matching(query), PageRequest.of(0, query.getLimit(), sort.and(Sort.by("id"))));
+        List<EmployeeDto> employees = query.getResultType() == EmployeeQuery.ResultType.COUNT
+                ? List.of()
+                : page.getContent().stream().map(this::mapToDto).collect(Collectors.toList());
+        return new EmployeeSearchResult(page.getTotalElements(), employees);
     }
 
     private EmployeeDto mapToDto(Employee employee) {
