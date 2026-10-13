@@ -1,6 +1,9 @@
 package com.employeehub.exception;
 
+import com.employeehub.ai.AiServiceException;
 import jakarta.validation.ConstraintViolationException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -16,6 +19,8 @@ import java.util.stream.Collectors;
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
+    private static final Logger log = LoggerFactory.getLogger(GlobalExceptionHandler.class);
+
     @ExceptionHandler(EmployeeNotFoundException.class)
     public ResponseEntity<Map<String, Object>> handleNotFound(EmployeeNotFoundException ex) {
         return error(HttpStatus.NOT_FOUND, ex.getMessage());
@@ -30,6 +35,19 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(DataIntegrityViolationException.class)
     public ResponseEntity<Map<String, Object>> handleDataIntegrity(DataIntegrityViolationException ex) {
         return error(HttpStatus.CONFLICT, "This record conflicts with existing data");
+    }
+
+    // AI failures: precise status for clients, friendly message for people, details only in server logs
+    @ExceptionHandler(AiServiceException.class)
+    public ResponseEntity<Map<String, Object>> handleAi(AiServiceException ex) {
+        log.warn("Ask failed ({}): {}", ex.getKind(), ex.getMessage());
+        return switch (ex.getKind()) {
+            case NOT_CONFIGURED -> error(HttpStatus.SERVICE_UNAVAILABLE, "The Ask feature isn't set up on this server.");
+            case RATE_LIMITED -> error(HttpStatus.SERVICE_UNAVAILABLE, "The AI service is busy right now. Please try again in a moment.");
+            case TIMEOUT -> error(HttpStatus.GATEWAY_TIMEOUT, "The AI service took too long to respond. Please try again.");
+            case INVALID_RESPONSE -> error(HttpStatus.BAD_GATEWAY, "I couldn't understand that question. Try rephrasing it.");
+            case PROVIDER_ERROR -> error(HttpStatus.BAD_GATEWAY, "The AI service isn't available right now. Please try again later.");
+        };
     }
 
     @ExceptionHandler(IllegalArgumentException.class)

@@ -2,6 +2,7 @@ package com.employeehub.controller;
 
 import com.employeehub.dto.EmployeeDto;
 import com.employeehub.dto.EmployeeMetricsDto;
+import com.employeehub.security.SecurityRoles;
 import com.employeehub.service.EmployeeService;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
@@ -59,9 +60,7 @@ public class EmployeeController {
 
     // Salaries are only visible to admins and managers; read-only users get null
     private EmployeeDto hideSalaryUnlessAllowed(EmployeeDto dto, Authentication auth) {
-        boolean canViewSalary = auth.getAuthorities().stream()
-                .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN") || a.getAuthority().equals("ROLE_MANAGER"));
-        if (!canViewSalary) {
+        if (!SecurityRoles.canViewSalary(auth)) {
             dto.setSalary(null);
         }
         return dto;
