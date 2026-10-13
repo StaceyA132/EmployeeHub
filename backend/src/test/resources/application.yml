@@ -13,3 +13,6 @@ employeehub:
   jwt:
     secret: test-only-secret-key-that-is-at-least-32-bytes-long
     expiration-ms: 3600000
+  ai:
+    # Tests never call a real provider; they swap in a fake AiQueryInterpreter where needed
+    api-key: ""

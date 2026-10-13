@@ -19,3 +19,11 @@ employeehub:
   jwt:
     secret: ${JWT_SECRET}
     expiration-ms: ${JWT_EXPIRATION_MS:3600000}
+  ai:
+    # Leave ANTHROPIC_API_KEY unset to run without the Ask feature
+    provider: ${AI_PROVIDER:anthropic}
+    api-key: ${ANTHROPIC_API_KEY:}
+    model: ${AI_MODEL:claude-opus-5-5}
+    effort: ${AI_EFFORT:low}
+    timeout: ${AI_TIMEOUT:20s}
+    max-retries: ${AI_MAX_RETRIES:2}

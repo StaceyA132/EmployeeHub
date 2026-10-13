@@ -6,6 +6,7 @@ import { Icon, type IconName } from './Icon';
 const navItems: { to: string; label: string; icon: IconName }[] = [
   { to: '/', label: 'Dashboard', icon: 'dashboard' },
   { to: '/employees', label: 'Employees', icon: 'users' },
+  { to: '/ask', label: 'Ask', icon: 'sparkles' },
 ];
 
 function roleLabel(isAdmin: boolean, isManager: boolean) {
