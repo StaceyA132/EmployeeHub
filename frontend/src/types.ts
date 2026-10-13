@@ -16,3 +16,11 @@ export interface EmployeeMetrics {
   departments: number;
   recentHires: number;
 }
+
+export interface AskResponse {
+  answerable: boolean;
+  answer: string;
+  totalMatches: number | null;
+  employees: Employee[];
+  interpretedAs: string[];
+}
