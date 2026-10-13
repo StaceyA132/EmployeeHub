@@ -2,14 +2,15 @@
 
 [![CI](https://github.com/StaceyA132/EmployeeHub/actions/workflows/ci.yml/badge.svg)](https://github.com/StaceyA132/EmployeeHub/actions/workflows/ci.yml)
 
-EmployeeHub is a full-stack employee management app. Admins and managers can add, edit, and track employees, see live workforce metrics, and control who can see what, including keeping salaries private from read-only users.
+EmployeeHub is a full-stack employee management app. Admins and managers can add, edit, and track employees, see live workforce metrics, and control who can see what, including keeping salaries private from read-only users. Anyone signed in can also **ask questions in plain English**, like *"who joined in the last 3 months?"*, and get answers from the real data.
 
-It's built with a **Spring Boot** REST API secured with **JWT** and role-based access control, a **React + TypeScript** frontend styled with **Tailwind CSS**, and **PostgreSQL**. Everything runs together with Docker Compose.
+It's built with a **Spring Boot** REST API secured with **JWT** and role-based access control, a **React + TypeScript** frontend styled with **Tailwind CSS**, **PostgreSQL**, and the **Claude API** for understanding questions. Everything runs together with Docker Compose.
 
 ![Dashboard](docs/screenshots/dashboard.png)
 
 ## Features
 
+- **Ask in plain English (AI):** Claude turns a question into search filters; the backend validates them and runs the query itself, so the AI never writes SQL or sees employee records (see [Ask: AI questions](#ask-ai-questions))
 - **Live dashboard:** total and active employees, departments, recent hires, a headcount-by-department chart, and the newest team members
 - **Employee directory:** search by name, email, or position; filter by department and status
 - **Add, edit, and delete** employees in dialogs with validation and clear error messages
@@ -21,6 +22,10 @@ It's built with a **Spring Boot** REST API secured with **JWT** and role-based a
 - **Tested:** JUnit/MockMvc backend tests, a pytest API suite, and GitHub Actions CI on every pull request
 
 ## Screenshots
+
+**Ask:** real answers from Claude-interpreted filters, with "Interpreted as" tags and a clear reply when a question can't be answered.
+
+![Ask page](docs/screenshots/ask.png)
 
 | Employee directory | Add / edit dialog |
 | --- | --- |
@@ -42,6 +47,7 @@ It's built with a **Spring Boot** REST API secured with **JWT** and role-based a
 | --- | --- |
 | Frontend | React 18, TypeScript, Vite, Tailwind CSS, React Router, Axios |
 | Backend | Java 17, Spring Boot 3, Spring Security, Spring Data JPA, Bean Validation, JJWT |
+| AI | Claude API via the official Anthropic Java SDK (structured JSON output) |
 | Database | PostgreSQL 15 (H2 in-memory for tests) |
 | Testing | JUnit 5, MockMvc, pytest + requests |
 | DevOps | Docker, Docker Compose, GitHub Actions |
@@ -68,6 +74,14 @@ Then set `JWT_SECRET` in `.env` to a long random value, for example the output o
 openssl rand -base64 48
 ```
 
+**Optional:** to turn on the Ask feature, add an [Anthropic API key](https://console.anthropic.com/) to `.env`:
+
+```bash
+ANTHROPIC_API_KEY=sk-ant-...
+```
+
+Without it the app works normally, and the Ask page says the feature isn't set up.
+
 ### 2. Start the app
 
 ```bash
@@ -93,6 +107,26 @@ Stop everything with `Ctrl+C` or `docker compose down`.
 
 These demo accounts are created automatically the first time the app starts.
 
+## Ask: AI questions
+
+The **Ask** page answers questions such as:
+
+- *"Who joined in the last 3 months?"*
+- *"How many people are in Engineering?"*
+- *"Who is currently on leave?"*
+- *"Who are the 3 highest paid employees?"* (admins and managers only)
+
+How it works:
+
+1. The question goes to Claude along with today's date and the department names. **No employee records are sent.**
+2. Claude returns search filters as JSON that must match a strict schema (department, status, position, hire-date range, salary range, list or count, sort, limit).
+3. The backend validates every filter (the department must exist, salary filters need the right role, limits are capped), then runs a parameterized JPA query.
+4. The backend writes the answer from the real results, so the AI can't make anything up.
+
+Questions the directory can't answer (performance, opinions, changing data) get a clear "can't answer that" reply. AI failures return proper status codes (`502`, `503`, `504`) with friendly messages.
+
+Full design, safety notes, configuration, and how to switch AI providers: **[docs/ask-feature.md](docs/ask-feature.md)**.
+
 ## Roles
 
 | | Admin | Manager | Read-only user |
@@ -101,6 +135,7 @@ These demo accounts are created automatically the first time the app starts.
 | See salaries | ✅ | ✅ | ❌ |
 | Add, edit, delete employees | ✅ | ✅ | ❌ |
 | Create user accounts | ✅ | ❌ | ❌ |
+| Ask questions | ✅ | ✅ | ✅ (salary questions excluded) |
 
 New accounts can only be created by an admin, and they start as read-only users:
 
@@ -125,6 +160,7 @@ All endpoints except login require an `Authorization: Bearer <token>` header.
 | `POST` | `/api/employees` | Admin, Manager | Creates an employee |
 | `PUT` | `/api/employees/{id}` | Admin, Manager | Updates an employee |
 | `DELETE` | `/api/employees/{id}` | Admin, Manager | Deletes an employee |
+| `POST` | `/api/ask` | Any user | Answers a plain-English question (`{"question": "..."}`) |
 
 Errors use consistent status codes with a JSON body containing a `message`:
 
@@ -135,10 +171,11 @@ Errors use consistent status codes with a JSON body containing a `message`:
 | `403` | Signed in, but your role isn't allowed to do this |
 | `404` | Employee not found |
 | `409` | Email already used by another employee |
+| `502` / `503` / `504` | Ask only: the AI service failed, isn't configured or is busy, or timed out |
 
 ## Running tests
 
-**Backend tests** run against an in-memory H2 database, so no Docker or Postgres is needed:
+**Backend tests** run against an in-memory H2 database, so no Docker or Postgres is needed. The Ask feature is tested with a fake AI and a local stand-in for the Claude API, so no API key is needed either:
 
 ```bash
 cd backend
@@ -181,6 +218,8 @@ npm run dev
 EmployeeHub/
 ├── backend/                      Spring Boot API
 │   └── src/main/java/com/employeehub/
+│       ├── ai/                   Ask feature: Claude client, prompt, answer writing
+│       ├── query/                Validated search filters and JPA Specifications
 │       ├── controller/           REST endpoints
 │       ├── service/              Business logic
 │       ├── repository/           Spring Data JPA repositories
@@ -190,11 +229,11 @@ EmployeeHub/
 │       └── exception/            Global error handling
 ├── frontend/                     React + TypeScript app
 │   └── src/
-│       ├── pages/                Login, Dashboard, Employees
+│       ├── pages/                Login, Dashboard, Employees, Ask
 │       ├── components/           Layout, sidebar, modal, badges, icons
 │       └── stores/               Auth state (token, roles)
 ├── tests/                        pytest API test suite
-├── docs/screenshots/             Images used in this README
+├── docs/                         Ask feature guide and README screenshots
 ├── .github/workflows/ci.yml      Continuous integration
 ├── docker-compose.yml            Postgres + backend + frontend
 └── .env.example                  Template for required secrets
