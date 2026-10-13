@@ -181,9 +181,9 @@ function EmployeesPage() {
   const columns = [
     { label: 'Employee', className: '' },
     { label: 'Department', className: 'hidden md:table-cell' },
-    { label: 'Position', className: 'hidden lg:table-cell' },
+    { label: 'Position', className: 'hidden xl:table-cell' },
     { label: 'Status', className: 'hidden sm:table-cell' },
-    { label: 'Hire date', className: 'hidden lg:table-cell' },
+    { label: 'Hire date', className: 'hidden 2xl:table-cell' },
     ...(canEdit ? [{ label: 'Salary', className: 'hidden md:table-cell' }, { label: '', className: '' }] : []),
   ];
 
@@ -271,18 +271,18 @@ function EmployeesPage() {
                     <td className="py-3 pl-6 pr-4">
                       <div className="flex items-center gap-3">
                         <Avatar firstName={e.firstName} lastName={e.lastName} />
-                        <div className="min-w-0">
+                        <div className="min-w-0 max-w-[11rem] sm:max-w-[14rem] lg:max-w-[11rem] xl:max-w-[14rem] 2xl:max-w-[18rem]">
                           <p className="truncate font-medium text-slate-900">{e.firstName} {e.lastName}</p>
-                          <p className="truncate text-slate-500 lg:hidden">{e.position}</p>
+                          <p className="truncate text-slate-500 xl:hidden">{e.position}</p>
                           <div className="mt-1 sm:hidden"><StatusBadge status={e.status} /></div>
-                          <p className="hidden truncate text-slate-500 lg:block">{e.email}</p>
+                          <p className="hidden truncate text-slate-500 xl:block">{e.email}</p>
                         </div>
                       </div>
                     </td>
-                    <td className="hidden whitespace-nowrap px-4 py-3 text-slate-700 md:table-cell">{e.departmentName || '—'}</td>
-                    <td className="hidden whitespace-nowrap px-4 py-3 text-slate-700 lg:table-cell">{e.position}</td>
+                    <td className="hidden px-4 py-3 text-slate-700 md:table-cell">{e.departmentName || '—'}</td>
+                    <td className="hidden px-4 py-3 text-slate-700 xl:table-cell">{e.position}</td>
                     <td className="hidden whitespace-nowrap px-4 py-3 sm:table-cell"><StatusBadge status={e.status} /></td>
-                    <td className="hidden whitespace-nowrap px-4 py-3 text-slate-700 lg:table-cell">{formatDate(e.hireDate)}</td>
+                    <td className="hidden whitespace-nowrap px-4 py-3 text-slate-700 2xl:table-cell">{formatDate(e.hireDate)}</td>
                     {canEdit && (
                       <>
                         <td className="hidden whitespace-nowrap px-4 py-3 tabular-nums text-slate-700 md:table-cell">{formatSalary(e.salary)}</td>

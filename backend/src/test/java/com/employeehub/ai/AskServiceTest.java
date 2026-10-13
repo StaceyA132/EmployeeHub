@@ -122,6 +122,22 @@ class AskServiceTest {
     }
 
     @Test
+    void topNAnswerSaysTopRatherThanFirst() {
+        QuestionInterpretation i = blank();
+        i.setDepartment("Ask Sales");
+        i.setSortBy("HIRE_DATE");
+        i.setSortDirection("ASC");
+        i.setLimit(1);
+        when(interpreter.interpret(anyString(), any())).thenReturn(i);
+
+        AskResponse response = askService.ask("who has been here the longest?", true);
+
+        assertThat(response.answer()).isEqualTo(
+                "Found 2 employees in Ask Sales. Showing the top 1 by hire date (oldest first).");
+        assertThat(response.employees()).extracting(EmployeeDto::getFirstName).containsExactly("Ben");
+    }
+
+    @Test
     void unanswerableQuestionReturnsTheModelsReason() {
         QuestionInterpretation i = blank();
         i.setAnswerable(false);
