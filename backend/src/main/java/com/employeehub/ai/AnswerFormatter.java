@@ -34,7 +34,14 @@ final class AnswerFormatter {
         }
         String found = "Found " + people + (scope.isEmpty() ? "" : " " + scope) + ".";
         int shown = result.employees().size();
-        return shown < total ? found + " Showing the first " + shown + "." : found;
+        if (shown >= total) {
+            return found;
+        }
+        // "Who has been here the longest?" reads better as "the top 1, by ..." than "the first 1"
+        boolean ranked = q.getSortBy() != EmployeeQuery.SortField.NAME;
+        return ranked
+                ? found + " Showing the top " + shown + " by " + sortLabel(q) + "."
+                : found + " Showing the first " + shown + ".";
     }
 
     /** Short labels describing what was searched, e.g. "Department: Sales". */
